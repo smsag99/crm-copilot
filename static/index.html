@@ -537,6 +537,20 @@ table.wl .s{font-size:10.5px;color:var(--ink-3);margin-top:2px}
 .reprow:last-child{border-bottom:none}
 
 /* توضیحات جمع‌شونده — همه‌جای داشبورد */
+/* دراپ‌داون بخش‌های سنگین: عنوان همیشه دیده می‌شود، عدد کلیدی کنارش،
+   و محتوا فقط وقتی باز شود که کاربر بخواهد. */
+details.panel{border:1px solid var(--hair);border-radius:12px;background:var(--surface-1);
+  overflow:hidden}
+details.panel>summary{cursor:pointer;list-style:none;padding:13px 16px;font-size:14px;
+  font-weight:700;color:var(--ink-1);display:flex;align-items:center;gap:9px;
+  justify-content:space-between}
+details.panel>summary::-webkit-details-marker{display:none}
+details.panel>summary:after{content:"▾";color:var(--ink-3);font-weight:400;
+  transition:transform .18s;margin-inline-start:auto}
+details.panel[open]>summary:after{transform:rotate(180deg)}
+details.panel>summary:hover{background:var(--plane)}
+details.panel>summary .s{font-weight:400;font-size:11.5px;color:var(--ink-3)}
+details.panel>.body{padding:0 16px 15px}
 details.note{border:1px solid var(--hair);border-radius:8px;background:var(--plane);margin:4px 0 9px}
 details.note>summary{cursor:pointer;font-size:11px;color:var(--ink-3);padding:5px 10px;
   list-style:none;user-select:none}
@@ -565,7 +579,8 @@ details.note>.body .caveat{background:transparent;border:none;padding:0}
 
 <nav class="tabs" role="tablist">
   <button role="tab" aria-selected="true"  data-v="work">کارتابل</button>
-  <button role="tab" aria-selected="false" data-v="summary">خلاصه و تمرکز</button>
+  <button role="tab" aria-selected="false" data-v="summary">نبض بازار</button>
+  <button role="tab" aria-selected="false" data-v="signals">مرکز سیگنال</button>
   <button role="tab" aria-selected="false" data-v="offers">آفر</button>
   <button role="tab" aria-selected="false" data-v="expert">کارتابل کارشناس</button>
   <button role="tab" aria-selected="false" data-v="overview">نمای کل سبد</button>
@@ -582,10 +597,10 @@ details.note>.body .caveat{background:transparent;border:none;padding:0}
   <div class="grid g6 mb" id="w-cards"></div>
   <div class="card mb">
     <div class="filters" style="margin:0">
-      <label class="f">اولویت<select id="w-prio"><option value="">همه</option></select></label>
-      <label class="f">مشکل<select id="w-fam"><option value="">همه</option></select></label>
-      <label class="f">کانال<select id="w-ch"><option value="">همه</option></select></label>
-      <label class="f grow">جست‌وجو<input type="text" id="w-q" autocomplete="off" placeholder="شناسه یا هدف"></label>
+      <label class="f">اولویت مشتری<select id="w-prio"><option value="">همهٔ اولویت‌ها</option></select></label>
+      <label class="f">نوع مشکل<select id="w-fam"><option value="">همهٔ مشکل‌ها</option></select></label>
+      <label class="f">کانال ارتباط<select id="w-ch"><option value="">همهٔ کانال‌ها</option></select></label>
+      <label class="f grow">جست‌وجوی مشتری<input type="text" id="w-q" autocomplete="off" placeholder="شناسهٔ مشتری، هدف ارتباط یا بخش"></label>
     </div>
   </div>
   <div class="card">
@@ -601,6 +616,46 @@ details.note>.body .caveat{background:transparent;border:none;padding:0}
 </section>
 
 <!-- ══════════════ آفر ══════════════ -->
+<!-- ══════════════ مرکز سیگنال ══════════════ -->
+<section class="view" id="v-signals">
+  <div class="headline mb" id="sg-headline"></div>
+  <div class="grid g4 mb" id="sg-kpis"></div>
+
+  <div class="sect"><h2>سه منبع سیگنال</h2>
+    <span class="s">روی هر منبع بزنید تا دسته‌ها و مشتریانش باز شود</span></div>
+  <div class="grid g3 mb" id="sg-sources"></div>
+
+  <div class="card mb" id="sg-detail"></div>
+
+  <div class="sect"><h2>مشتریان این منبع</h2>
+    <span class="s" id="sg-rowsub"></span></div>
+  <div class="card mb">
+    <div class="twrap" style="max-height:560px">
+      <table class="attn wl" id="sg-table"></table></div>
+    <p class="hint" id="sg-rownote" style="margin:9px 0 0"></p>
+  </div>
+
+  <div class="grid g2 mb">
+    <details class="panel"><summary>تقاضای انباشتهٔ توسعه
+      <span class="s">درآمدی که پشت هر نوع درخواست ایستاده</span></summary>
+      <div class="body"><div id="sg-demand"></div>
+        <p class="hint">مشتریان در انواع مختلف هم‌پوشانی دارند، پس این ستون‌ها را با هم جمع نزنید؛ هر عدد، درآمد مشتریانی است که همان تغییر را خواسته‌اند.</p>
+      </div></details>
+    <details class="panel"><summary>هزینهٔ اندازه‌گیری‌شدهٔ بازگشتی
+      <span class="s" id="sg-actsum"></span></summary>
+      <div class="body"><div id="sg-act"></div>
+        <p class="hint" id="sg-actnote"></p></div></details>
+  </div>
+
+  <details class="panel mb"><summary>آنچه آزمودیم و اثبات نشد
+    <span class="s">چهار آزمون اثر، همه بدون معناداری</span></summary>
+    <div class="body"><div id="sg-tests"></div></div></details>
+
+  <details class="panel mb"><summary>شکاف داده در CRM
+    <span class="s" id="sg-gapsum"></span></summary>
+    <div class="body"><div id="sg-gap"></div></div></details>
+</section>
+
 <section class="view" id="v-offers">
   <div class="headline mb" id="o-headline"></div>
   <div class="grid g4 mb" id="o-kpis"></div>
@@ -669,8 +724,9 @@ details.note>.body .caveat{background:transparent;border:none;padding:0}
   <div class="sect"><h2 id="p-title">خلاصهٔ دوره</h2><span class="s" id="p-range"></span></div>
   <div class="grid g4 mb" id="p-kpis"></div>
 
-  <div class="sect"><h2>مقایسه با دورهٔ قبل</h2><span class="s" id="p-cmprange"></span></div>
-  <div class="card mb"><div id="p-compare"></div></div>
+  <details class="panel mb" id="p-cmpwrap"><summary>مقایسه با دورهٔ قبل
+    <span class="s" id="p-cmprange"></span></summary>
+    <div class="body"><div id="p-compare"></div></div></details>
 
   <div class="sect"><h2>پیش‌بینی دورهٔ بعد</h2><span class="s" id="p-fcnote"></span></div>
   <div class="grid g4 mb" id="p-forecast"></div>
@@ -708,17 +764,19 @@ details.note>.body .caveat{background:transparent;border:none;padding:0}
   <div class="grid g4 mb" id="fc-boxes"></div>
 
   <div class="grid g2 mb">
-    <div class="card">
-      <h3>حاشیهٔ ناخالص در برابر حاشیهٔ واقعی</h3>
-      <p class="hint">هر نقطه یک مشتری. فاصلهٔ عمودی هر نقطه از محور افقی، همان هزینهٔ پول اوست. اندازه = فروش، رنگ = سود واقعی.</p>
-      <div id="fc-scatter" class="chart"></div>
-      <div class="legend" id="fc-scatlg"></div>
-    </div>
-    <div class="card">
-      <h3>حرکت RFM نسبت به یک فصل پیش</h3>
-      <p class="hint" id="fc-rfmnote"></p>
-      <div id="fc-rfmmove"></div>
-    </div>
+    <details class="panel"><summary>حاشیهٔ ناخالص در برابر حاشیهٔ واقعی
+      <span class="s" id="fc-scatsum"></span></summary>
+      <div class="body">
+        <p class="hint">هر نقطه یک مشتری. فاصلهٔ عمودی هر نقطه از محور افقی، همان هزینهٔ پول اوست. اندازه = فروش، رنگ = سود واقعی.</p>
+        <div id="fc-scatter" class="chart"></div>
+        <div class="legend" id="fc-scatlg"></div>
+      </div></details>
+    <details class="panel"><summary>حرکت RFM نسبت به یک فصل پیش
+      <span class="s" id="fc-rfmsum"></span></summary>
+      <div class="body">
+        <p class="hint" id="fc-rfmnote"></p>
+        <div id="fc-rfmmove"></div>
+      </div></details>
   </div>
 
   <div class="sect"><h2 id="fc-cuttitle">برش فهرست</h2>
@@ -1286,7 +1344,11 @@ function renderDetail(p){
     f.rfm_segment?chip('neu',`RFM: ${f.rfm_segment} (${f.RFM||''})`):null,
     f.focus?chip(({'رشد بده':'good','حفظ کن':'neu','اصلاح کن':'medium','کاهش بده':'critical'})[f.focus]||'low',`تمرکز: ${f.focus}`):null,
     f.rfm_move_label&&f.rfm_move_label.startsWith('افت')?chip('critical',`RFM: ${f.RFM_prev}→${f.RFM} (${f.rfm_move_label})`):null,
-    el('span',{class:'chip'},`رتبهٔ LTV ${int(f.ltv_rank)} از ${META.customers}`)));
+    el('span',{class:'chip'},`رتبهٔ LTV ${int(f.ltv_rank)} از ${META.customers}`),
+    /* راه برگشت به کارتابل: پروفایل «چرا» را می‌گوید، کارتابل «حالا چه کن» را. */
+    el('button',{class:'iconbtn',style:'margin-inline-start:auto',
+      title:'کارت کوتاه کارتابل: هدف، کانال، کارها و دستور کار',
+      onclick:()=>openCard(p.customer_id)},'خلاصهٔ مشتری')));
   head.append(el('div',{class:'md',html:MD.render(p.summary)}));
   host.append(head);
 
@@ -1971,6 +2033,200 @@ function openWork(cid){
 /* رتبه‌بندی روی اهمیت مشتری و سپس آوردهٔ هدف است — نه روی احتمال پذیرش.
    چون هیچ‌یک از چهار عامل آزموده‌شده احتمال را جابه‌جا نکرد، احتمال برای همه
    یکسان است و فقط با انتخاب پنجرهٔ ۸ تا ۱۴ روزه بالا می‌رود. */
+/* ═══════════════════════ مرکز سیگنال ═══════════════════════
+   سه منبع، یک واحد شمارش، و یک عدد پول که ادعای علّی نمی‌کند: چهار آزمون
+   اثر روی همین داده اجرا شد و هیچ‌کدام نشان نداد رسیدگی خرید را بالا می‌برد.
+   پس عدد این تب «ارزش از‌دست‌رفتنی» است، نه «افزایش فروش». */
+let SG=null, SGSRC='complaint';
+const SGCLS={complaint:'critical',dev:'neu',crm:'warning'};
+/* «کمتر» فقط در شکایت خبر خوبی است. در درخواست توسعه، رشد یعنی تقاضای بیشتر؛
+   در تعامل، کاهش یعنی تماس کمتر. پس رنگ را فقط جایی می‌گذاریم که جهتش روشن است. */
+const DIRCLS={complaint:{'رو به رشد':'critical','رو به کاهش':'good'},
+              dev:{}, crm:{'رو به کاهش':'warning'}};
+const DIRNOTE={complaint:'در این منبع، کاهش خبر خوبی است.',
+               dev:'رشد در اینجا یعنی تقاضای بیشتر برای همان تغییر — فرصت، نه مشکل.',
+               crm:'کاهش در اینجا یعنی تماس کمتر با مشتری، نه مشکل کمتر.'};
+
+function renderSignals(){
+  if(!SG)return;
+  $('#sg-headline').innerHTML='';
+  $('#sg-headline').append(el('b',{},SG.headline),
+    el('div',{class:'hint','data-keep':'1',style:'margin:6px 0 0'},SG.value_note));
+
+  const K=$('#sg-kpis'); K.innerHTML='';
+  [['ارزش کمینهٔ رسیدگی',money(SG.min_value_total),'کف اندازه‌گیری‌شده + ارزش در خطر','crit'],
+   ['درآمد در معرض',money(SG.exposure_total),'سقف، نه انتظار — درآمد گروه کالای درگیر',''],
+   ['اکتیویتی نگاشت‌شده',int(SG.total_rows)+' مشتری',
+    SG.sections.map(x=>int(x.total)+' '+x.label).join(' · '),''],
+   ['مسدود به حاشیهٔ منفی',int(SG.blocked_customers)+' مشتری',
+    'با اصلاح شرایط پرداخت: '+money(SG.blocked_value),'warn']]
+   .forEach(([k,v,x,c])=>K.append(el('div',{class:'kpi'},
+     el('div',{class:'k'},k),
+     el('div',{class:'v'+(c?' '+c:'')},v),el('div',{class:'x'},x))));
+
+  const C=$('#sg-sources'); C.innerHTML='';
+  SG.sections.forEach(sec=>{
+    const t=sec.trend;
+    const b=el('div',{class:'wcard '+(SGCLS[sec.key]||'low'),
+      'aria-pressed':String(SGSRC===sec.key),
+      onclick:()=>{SGSRC=sec.key;renderSignals();}});
+    b.append(el('div',{class:'n'},int(sec.total)),
+      el('div',{class:'f'},sec.label),
+      el('div',{class:'m'},int(sec.customers)+' مشتری · '+int(sec.open)+' '+sec.open_label),
+      el('div',{class:'m'},'نیم‌سال قبل '+int(t.prev)+' · اخیر '+int(t.now)
+        +' — '+t.direction));
+    C.append(b);});
+
+  const sec=SG.sections.find(x=>x.key===SGSRC)||SG.sections[0];
+  const D=$('#sg-detail'); D.innerHTML='';
+  D.append(el('h3',{},sec.label+' — '+sec.question),
+    el('p',{class:'hint'},'دو نیم‌سال متوالی مقایسه می‌شوند: '
+      +sec.trend.prev_range.join(' تا ')+'  در برابر  '+sec.trend.range.join(' تا ')
+      +'. منبع: شیت «'+sec.sheet+'». '+(DIRNOTE[sec.key]||'')));
+  const tw=el('div',{class:'twrap',style:'max-height:340px'});
+  const tb=el('table',{class:'attn'});
+  tb.append(el('thead',{},el('tr',{},['دسته','تعداد','مشتری',sec.open_label,'نیم‌سال قبل ← اخیر','روند']
+    .map(h=>el('th',{},h)))));
+  const body=el('tbody',{});
+  sec.categories.forEach(c=>body.append(el('tr',{},
+    el('td',{},c.category),
+    el('td',{class:'num'},int(c.n)),
+    el('td',{class:'num'},int(c.customers)),
+    el('td',{class:'num'},int(c.open)),
+    el('td',{class:'num'},int(c.prev)),
+    el('td',{class:'num'},int(c.now)),
+    el('td',{},el('span',{class:'chip '
+      +((DIRCLS[sec.key]||{})[c.direction]||'low')},c.direction)))));
+  tb.append(body); tw.append(tb); D.append(tw);
+
+  /* ── مشتریان همین منبع، مرتب بر ارزش کمینه */
+  const rows=(SG.rows||[]).filter(r=>r.sources[SGSRC]);
+  $('#sg-rowsub').textContent=int(rows.length)+' مشتری در '+sec.label
+    +' — مرتب بر ارزش کمینهٔ رسیدگی';
+  const T=$('#sg-table'); T.innerHTML='';
+  T.append(el('thead',{},el('tr',{},['مشتری','اکتیویتی','دسته‌های اصلی',
+    'ارزش کمینه','درآمد در معرض'].map(h=>el('th',{},h)))));
+  const rb=el('tbody',{});
+  rows.slice(0,60).forEach(r=>{
+    const sc=r.sources[SGSRC], v=r.value;
+    const tr=el('tr',{onclick:()=>openSignal(r.customer_id)});
+    tr.append(
+      el('td',{style:'white-space:nowrap'},el('b',{},r.customer_id),
+        el('div',{class:'s'},'بخش '+r.segment+' · '+(r.rfm_segment||'—'))),
+      el('td',{},el('div',{},int(sc.n)+' مورد'),
+        el('div',{class:'s'},int(sc.open||0)+' '+sec.open_label)),
+      el('td',{},el('div',{class:'s'},Object.entries(sc.top||{})
+        .map(([k,n])=>k+' ('+int(n)+')').join('، ')||'—')),
+      el('td',{class:'num'},v.min_value
+        ? el('b',{},money(v.min_value))
+        : el('span',{class:'chip warning'},'حاشیهٔ منفی')),
+      el('td',{class:'num'},money(sc.exposure||v.exposure)));
+    rb.append(tr);});
+  if(!rows.length)rb.append(el('tr',{},el('td',{colspan:5},el('div',{class:'empty'},'—'))));
+  T.append(rb);
+  $('#sg-rownote').textContent='ارزش کمینه = کف اندازه‌گیری‌شدهٔ بازگشتی + '
+    +'درآمد گروه کالای درگیر × حاشیهٔ واقعی × احتمال ریزش کالیبره‌شده. این عدد '
+    +'در سطح مشتری است و یک‌بار حساب می‌شود، نه یک‌بار به‌ازای هر منبع — '
+    +'یک مشتری یک‌بار می‌رود. روی هر سطر بزنید تا اجزایش باز شود.';
+
+  /* ── تقاضای انباشته */
+  CH.hbar($('#sg-demand'),(SG.dev_demand||[]).map(d=>({
+    label:d.request_type,value:d.revenue,
+    sub:int(d.customers)+' مشتری · '+int(d.open)+' بی‌پاسخ · رد فنی '+pc(d.reject_rate,0)})),
+    {fmt:money});
+
+  /* ── جدول اکچوئری بازگشتی */
+  const act=SG.return_actuarial||{}, ov=act.overall||{};
+  $('#sg-actsum').textContent=pc((ov.p||0)*100,1)+' شکایت‌ها بازگشتی داشته‌اند';
+  $('#sg-actnote').textContent=act.note||'';
+  const top=Object.entries(act.by_title||{}).sort((a,b)=>b[1].expected_cost-a[1].expected_cost).slice(0,8);
+  CH.hbar($('#sg-act'),top.map(([k,v])=>({label:k,value:v.expected_cost,
+    sub:int(v.n)+' شکایت · احتمال بازگشتی '+pc(v.p_return*100,0)})),{fmt:money});
+
+  /* ── آزمون‌های اثر */
+  const TT=$('#sg-tests'); TT.innerHTML='';
+  (SG.effect_tests||[]).forEach(t=>{
+    const row=el('div',{class:'reprow'});
+    row.append(el('div',{class:'k'},t.claim),
+      el('div',{},el('div',{},t.test+' → '+t.result
+        +(t.p!=null?'  (p='+t.p+')':'')),
+        el('div',{class:'s'},t.n),
+        el('span',{class:'chip good'},t.verdict)));
+    TT.append(row);});
+
+  /* ── شکاف CRM */
+  const g=SG.crm_gap||{};
+  $('#sg-gapsum').textContent=int(g.with_next_action)+' اقدام ثبت‌شده، میانهٔ عمر '
+    +int(g.median_age)+' روز';
+  const G=$('#sg-gap'); G.innerHTML='';
+  G.append(el('div',{class:'dcards'},
+    ...[['اقدام بعدی ثبت‌شده',int(g.with_next_action),'از '+int(g.total)+' تعامل'],
+        ['مشتری درگیر',int(g.customers),'یعنی همهٔ سبد'],
+        ['کهنه‌تر از ۹۰ روز',int(g.older_than_90),pc(g.older_than_90/Math.max(g.with_next_action,1)*100,0)],
+        ['میانهٔ عمر',int(g.median_age)+' روز','بدون هیچ فیلد بستن']]
+      .map(([k,v,x])=>el('div',{class:'dcard'},el('div',{class:'k'},k),
+        el('div',{class:'v'},String(v)),el('div',{class:'x'},x)))),
+    el('p',{class:'caveat'},g.note||''));
+  collapseNotes();
+}
+
+function openSignal(cid){
+  const r=(SG.rows||[]).find(x=>x.customer_id===cid); if(!r)return;
+  const v=r.value;
+  $('#drawer').classList.add('on'); $('#scrim').classList.add('on');
+  $('#dw-name').textContent=cid;
+  const L=$('#dw-labels'); L.innerHTML='';
+  [el('span',{class:'chip'},'بخش '+r.segment),
+   el('span',{class:'chip neu'},r.rfm_segment||'—'),
+   el('span',{class:'chip'},int(r.activities)+' اکتیویتی'),
+   r.margin_blocked?el('span',{class:'chip warning'},'حاشیهٔ واقعی منفی'):null
+  ].filter(Boolean).forEach(n=>L.append(n));
+  $('#dw-open').onclick=()=>{closeDrawer();openCard(cid);};
+  const B=$('#dw-body'); B.innerHTML='';
+
+  B.append(el('div',{class:'mainprob'},
+    el('div',{class:'t'},'ارزش کمینهٔ رسیدگی: '+money(v.min_value)),
+    el('div',{class:'e'},r.margin_blocked
+      ? 'حاشیهٔ واقعی '+pc(v.real_margin)+' است؛ نگه‌داشتن این مشتری سود واقعی '
+        +'نمی‌سازد. با اصلاح شرایط پرداخت: '+money(v.value_if_terms_fixed)
+      : 'یک‌بار در سطح مشتری، نه یک‌بار به‌ازای هر منبع')));
+
+  /* اجزای عدد، یک‌جا — چون در سطح مشتری حساب می‌شود نه در سطح منبع */
+  const g=el('div',{class:'dcards'});
+  [['کف اندازه‌گیری‌شده',money(v.measured_floor),'بازگشتی واقعی همین نوع شکایت'],
+   ['درآمد در معرض',money(v.exposure),pc(v.family_share_pct,0)+' سبد این مشتری'],
+   ['حاشیهٔ واقعی',pc(v.real_margin),'پس از هزینهٔ پول'],
+   ['احتمال ریزش',prob(v.churn),'مدل کالیبره، AUC ۰٫۸۳۱'],
+  ].forEach(([a,b,x])=>g.append(el('div',{class:'dcard'},
+    el('div',{class:'k'},a),el('div',{class:'v'},b),el('div',{class:'x'},x))));
+  B.append(el('div',{class:'card'},el('h3',{},'اجزای ارزش کمینه'),g,
+    el('p',{class:'caveat'},v.basis)));
+
+  Object.entries(r.sources).forEach(([k,sc])=>{
+    const c=el('div',{class:'card'});
+    c.append(el('h3',{},SGNAME[k]+' — '+int(sc.n)+' مورد'
+      +(sc.open?' ('+int(sc.open)+' باز)':'')));
+    const top=Object.entries(sc.top||{});
+    if(top.length)c.append(el('p',{},'دسته‌های اصلی: '
+      +top.map(([a,n])=>a+' ('+int(n)+')').join('، ')));
+    if(sc.measured_floor)c.append(el('p',{},'کف اندازه‌گیری‌شدهٔ این منبع: '
+      +money(sc.measured_floor)));
+    if(sc.next_actions)c.append(el('p',{},'اقدام‌های ثبت‌شده: '
+      +Object.entries(sc.next_actions).map(([a,n])=>a+' ('+int(n)+')').join('، ')
+      +(sc.oldest_days!=null?' · قدیمی‌ترین '+int(sc.oldest_days)+' روز':'')));
+    if((sc.families||[]).length)c.append(el('p',{class:'hint'},
+      'گروه کالای درگیر: '+sc.families.join('، ')+' — همین گروه، مبنای درآمد در معرض است.'));
+    if(!sc.risk_basis)c.append(el('p',{class:'hint'},
+      'این منبع گروه کالای درگیری ندارد، پس هیچ ارزش در خطری به آن نسبت نمی‌دهیم؛ '
+      +'نقشش نشان دادن کار معلق است، نه پول.'));
+    B.append(c);});
+
+  B.append(el('div',{class:'card'},el('h3',{},'چرا عدد «افزایش فروش» نیست'),
+    el('p',{class:'caveat','data-keep':'1'},SG.value_note)));
+  collapseNotes();
+}
+const SGNAME={complaint:'شکایت',dev:'درخواست توسعه',crm:'تعامل CRM'};
+
 let OFF=null, OPLAY='';
 
 function renderOffers(){
@@ -2450,15 +2706,50 @@ const FCLS={'رشد بده':'good','حفظ کن':'neu','اصلاح کن':'warnin
    کل رتبه‌بندی برای هر نرخی درجا و بدون رفت‌وبرگشت با سرور بازمحاسبه می‌شود. */
 /* ورودی «نرخ» همیشه درصدِ ماهانه است (مثلاً ۴)، خروجی درصدِ فروش. */
 const comAt=(days,ratePct)=>ratePct*(days||0)/30;
+/* پنجک پولی RFM روی سود واقعی است، پس با نرخ جابه‌جا می‌شود. اینجا همان
+   پنجک‌بندی دورهٔ جاری و دورهٔ قبل را با نرخ لحظه‌ای بازمی‌سازیم تا پنل حرکت
+   RFM روی نرخِ لحظهٔ ساخت کش یخ نزند. */
+function quintile(vals){
+  const idx=vals.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);
+  const q=new Array(vals.length);
+  idx.forEach(([,i],r)=>{q[i]=Math.min(4,Math.floor(r*5/idx.length))+1;});
+  return q;
+}
+function rfmMove(pts){
+  const ok=pts.filter(p=>p.prev_revenue!=null&&p.d_rf!=null);
+  const M=quintile(ok.map(p=>p.real_gp));
+  const Mp=quintile(ok.map(p=>p.prev_revenue*(p.prev_margin-comAt(p.prev_days_cash,p._rate))/100));
+  const dist={'افت شدید':0,'افت':0,'بدون تغییر':0,'رشد':0,'رشد قوی':0,
+              'بدون سابقهٔ مقایسه':pts.length-ok.length};
+  let alerts=0;
+  ok.forEach((p,i)=>{
+    const mv=p.d_rf+(M[i]-Mp[i]);
+    dist[mv<=-3?'افت شدید':mv<=-1?'افت':mv>=3?'رشد قوی':mv>=1?'رشد':'بدون تغییر']++;
+    if(Mp[i]>=4&&mv<=-2)alerts++;});
+  return {dist, alerts, compared:ok.length};
+}
+
 function recompute(rate){
   const pts=(FOC.margin_points||[]).map(p=>{
     const com=comAt(p.days_cash||0,rate);
-    return {...p, cost_of_money_pct:com, real_margin:p.margin-com,
+    return {...p, _rate:rate, cost_of_money_pct:com, real_margin:p.margin-com,
             real_gp:p.revenue*(p.margin-com)/100};});
   const rev=pts.reduce((a,p)=>a+p.revenue,0);
   const gp=pts.reduce((a,p)=>a+p.revenue*p.margin/100,0);
   const com=pts.reduce((a,p)=>a+p.revenue*comAt(p.days_cash,rate)/100,0);
-  return {pts, rev, gp, com, realgp:gp-com,
+  /* چهار خانه هم با نرخ بازمحاسبه می‌شود: عضویت هر مشتری در خانه ثابت است
+     (از ظرفیت رشد می‌آید) ولی سود واقعی هر خانه با نرخ حرکت می‌کند. */
+  const boxes={};
+  pts.forEach(p=>{
+    const b=boxes[p.focus]||(boxes[p.focus]={customers:0,revenue:0,gross_profit:0,
+      real_gp:0,cost_of_money:0,value_at_play:0,rm:[]});
+    b.customers++; b.revenue+=p.revenue; b.gross_profit+=p.revenue*p.margin/100;
+    b.real_gp+=p.real_gp; b.cost_of_money+=p.revenue*p.cost_of_money_pct/100;
+    b.value_at_play+=p.value_at_play||0; b.rm.push(p.real_margin);});
+  Object.values(boxes).forEach(b=>{
+    b.rm.sort((x,y)=>x-y);
+    b.real_margin=b.rm.length?b.rm[Math.floor(b.rm.length/2)]:0; delete b.rm;});
+  return {pts, rev, gp, com, realgp:gp-com, boxes, move:rfmMove(pts),
           neg:pts.filter(p=>p.real_margin<0).length,
           negGross:pts.filter(p=>p.margin<0).length};
 }
@@ -2532,7 +2823,7 @@ function renderFocus(){
   /* ── چهار خانه */
   const B=$('#fc-boxes'); B.innerHTML='';
   const meta=FOC.focus_meta||{};
-  Object.entries(FOC.focus||{}).sort((a,b)=>{
+  Object.entries(R.boxes||{}).sort((a,b)=>{
     const o=['رشد بده','حفظ کن','اصلاح کن','کاهش بده'];return o.indexOf(a[0])-o.indexOf(b[0]);})
     .forEach(([k,v])=>{
     const m=meta[k]||{};
@@ -2557,8 +2848,12 @@ function renderFocus(){
   /* ── حرکت RFM */
   $('#fc-rfmnote').textContent='بُعد پولی RFM روی «'+(FOC.rfm_m_basis||'')+
     '» است، نه فروش — چون مشتری بزرگ با تخفیف عمیق می‌تواند ۵-۵-۵ بگیرد و زیان‌ده باشد. '+
-    (FOC.rfm_alerts||0)+' مشتری پرارزش امتیازشان ۲ پله یا بیشتر افت کرده است.';
-  const mv=FOC.rfm_movement||{};
+    'چون این بُعد از سود واقعی می‌آید، با نرخ '+pc(rate,1)+' بازمحاسبه شده: '+
+    int(R.move.alerts)+' مشتری پرارزش امتیازشان ۲ پله یا بیشتر افت کرده‌اند '+
+    '(روی '+int(R.move.compared)+' مشتری با سابقهٔ مقایسه).';
+  const mv=R.move.dist;
+  $('#fc-rfmsum').textContent=int(R.move.alerts)+' هشدار افت · نرخ '+pc(rate,1);
+  $('#fc-scatsum').textContent=int(R.neg)+' مشتری زیر خط صفر · نرخ '+pc(rate,1);
   CH.hbar($('#fc-rfmmove'),['افت شدید','افت','بدون تغییر','رشد','رشد قوی','بدون سابقهٔ مقایسه']
     .filter(k=>mv[k]).map(k=>({label:k,value:mv[k],
       color:k.startsWith('افت')?'var(--crit)':k.startsWith('رشد')?'var(--good)':null})),
@@ -2672,13 +2967,14 @@ function go(v){
   if(v==='summary'&&FOC)renderFocus();
   if(v==='work'&&WL){renderWork();renderFollowup();}
   if(v==='offers'&&OFF)renderOffers();
+  if(v==='signals'&&SG)renderSignals();
   if(v==='expert')renderExpert();
   collapseNotes();
 }
 
 /* نقش: کارتابل مدیر فروش در برابر کارتابل کارشناس.
    کارشناس فقط ارجاعات خودش را می‌بیند — نه سبد، نه آفر، نه فهرست تمرکز. */
-const MANAGER_TABS=['work','summary','offers','overview','customers','segments','patterns','text'];
+const MANAGER_TABS=['work','summary','signals','offers','overview','customers','segments','patterns','text'];
 function setRole(role){
   ROLE=role;
   const mgr=role==='manager';
@@ -2693,6 +2989,7 @@ function setRole(role){
 function collapseNotes(){
   $$('.hint, .caveat').forEach(n=>{
     if(n.dataset.wrapped||!n.textContent.trim()||n.closest('details.note'))return;
+    if(n.dataset.keep)return;   /* جمله‌هایی که جمع‌کردنشان خودِ پیام را می‌کشد */
     if(n.closest('.dock')||n.closest('.wcard'))return;
     n.dataset.wrapped='1';
     const d=el('details',{class:'note'});
@@ -2718,12 +3015,12 @@ function dockOpen(open){
     document.documentElement.setAttribute('data-theme',next);
     if(PORT)renderOverview(); if(SEG)renderSegments(); if(PAT)renderPatterns();
     if(PER)renderPeriod(); if(FOC){renderFocus();renderValidation();}
-    if(WL){renderWork();renderFollowup();} if(OFF)renderOffers();
+    if(WL){renderWork();renderFollowup();} if(OFF)renderOffers(); if(SG)renderSignals();
     if(SEL)selectCustomer(SEL); collapseNotes();};
   try{
-    [META,PORT,SEG,PAT,FOC,WL,OFF,EXP]=await Promise.all([api('/api/meta'),api('/api/portfolio'),
+    [META,PORT,SEG,PAT,FOC,WL,OFF,EXP,SG]=await Promise.all([api('/api/meta'),api('/api/portfolio'),
       api('/api/segments'),api('/api/patterns'),api('/api/focus'),api('/api/worklist'),
-      api('/api/offers'),api('/api/experts')]);
+      api('/api/offers'),api('/api/experts'),api('/api/signals_center')]);
   }catch(e){document.body.innerHTML='<main><div class="card"><h3>سرور در دسترس نیست</h3><p class="hint">'+MD.esc(e.message)+'</p></div></main>';return;}
 
   $('#asof').innerHTML='<span class="dot"></span>داده تا '+META.as_of_fa;

@@ -306,6 +306,15 @@ def worklist(limit: int = 120):
     return JSONResponse(content=_clean({**w, "rows": w["rows"][:int(limit)]}))
 
 
+@app.get("/api/signals_center")
+def signals_center(limit: int = 200):
+    """مرکز سیگنال: سه منبع، روند هر دسته، نگاشت به مشتری، و ارزش کمینهٔ رسیدگی."""
+    sc = STORE.portfolio.get("signals_center") or {}
+    if not sc:
+        raise HTTPException(503, "مرکز سیگنال در کش موجود نیست؛ ابتدا کش را بسازید")
+    return JSONResponse(content=_clean({**sc, "rows": sc["rows"][:int(limit)]}))
+
+
 @app.get("/api/offers")
 def offers(limit: int = 120):
     """موتور آفر: بازی‌ها، سطرها با دلیل، آفرهای مسدود و آزمون‌های عامل‌ها."""

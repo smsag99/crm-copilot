@@ -42,6 +42,9 @@ SYSTEM_PROMPT = """تو دستیار تحلیل مشتریان یک تولیدک
 - برای هر پرسش دوره‌ای — «این ماه چطور بود»، «نسبت به دورهٔ قبل»، «دورهٔ بعد چه
   می‌شود»، «الان سراغ کدام مشتری بروم» — از period_summary استفاده کن و طول دوره
   را از خود پرسش استخراج کن.
+- برای شکایت، درخواست توسعه، روند آن‌ها یا «رسیدگی چقدر می‌ارزد» از
+  signal_center استفاده کن. هرگز نگو رسیدگی فروش را بالا می‌برد — آزموده و
+  اثبات نشده (p بین ۰٫۴۰ و ۰٫۵۵).
 - برای «به چه کسی آفر بدهیم»، «چقدر تخفیف»، «چرا این آفر به این مشتری» یا «مهلت
   آفر چقدر باشد» از offer_plan استفاده کن. هرگز نگو تخفیف بیشتر پذیرش را بالا
   می‌برد — روی این داده آزموده و رد شده است (p=۰٫۹۰).
@@ -242,6 +245,20 @@ TOOLS_SPEC = [
             "limit": {"type": "integer"}}},
     },
     {
+        "name": "signal_center",
+        "description": ("مرکز سیگنال: سه منبع — شکایت، درخواست توسعه، تعامل CRM. "
+                        "شمارش هر دسته، روند دو نیم‌سال، نگاشت به مشتری، و «ارزش "
+                        "کمینهٔ رسیدگی». برای پرسش‌هایی مثل «چه مشکلی تکرار "
+                        "می‌شود»، «کدام درخواست توسعه بیشترین درآمد را پشت خود "
+                        "دارد»، «روند شکایت‌ها چطور است»، «رسیدگی به این چقدر "
+                        "می‌ارزد». توجه: افزایش فروش پس از رسیدگی روی این داده "
+                        "آزموده و اثبات نشد؛ عدد این ابزار «از‌دست‌رفتنی» است."),
+        "parameters": {"type": "object", "properties": {
+            "source": {"type": "string", "enum": ["complaint", "dev", "crm"]},
+            "customer_id": {"type": "string", "description": "مثل C_245948؛ اختیاری"},
+            "limit": {"type": "integer"}}},
+    },
+    {
         "name": "compare_customers",
         "description": "مقایسهٔ دو تا پنج مشتری روی شاخص‌های تصمیم‌ساز.",
         "parameters": {
@@ -271,6 +288,7 @@ class Copilot:
             "focus_list": store.focus_list,
             "work_card": store.work_card,
             "offer_plan": store.offer_plan,
+            "signal_center": store.signal_center,
         }
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
         self.model = model or os.environ.get("GEMINI_MODEL") or MODELS[0]
@@ -362,6 +380,10 @@ class Copilot:
                 return {"answer": run("work_card", customer_id=cid),
                         "trace": trace, "mode": "deterministic"}
             if any(w in q for w in [norm(x) for x in
+                                    ["شکایت", "درخواست توسعه", "سیگنال", "روند"]]):
+                return {"answer": run("signal_center", customer_id=cid),
+                        "trace": trace, "mode": "deterministic"}
+            if any(w in q for w in [norm(x) for x in
                                     ["آفر", "تخفیف", "پیشنهاد قیمت", "مهلت"]]):
                 return {"answer": run("offer_plan", customer_id=cid),
                         "trace": trace, "mode": "deterministic"}
@@ -391,6 +413,14 @@ class Copilot:
                 "وقت تیم", "کدام مشتری سودآور", "توجه کمتر", "کاهش بده", "تامین مالی",
                 "شرایط پرداخت"):
             return {"answer": run("focus_list"), "trace": trace, "mode": "deterministic"}
+        if hasw("مرکز سیگنال", "روند شکایت", "درخواست توسعه", "مشکل تکراری",
+                "چه مشکلی تکرار", "رسیدگی چقدر", "ارزش رسیدگی", "تقاضای انباشته",
+                "اقدام معلق", "سیگنال ها"):
+            src = ("complaint" if hasw("شکایت", "کیفیت") else
+                   "dev" if hasw("توسعه", "درخواست فنی") else
+                   "crm" if hasw("تعامل", "تماس", "crm") else "")
+            return {"answer": run("signal_center", source=src), "trace": trace,
+                    "mode": "deterministic"}
         if hasw("آفر", "تخفیف", "مهلت آفر", "پیشنهاد قیمتی", "کمپین", "چه کسی آفر"):
             play = ("بازگشت" if hasw("بازگشت", "برگرداندن", "افت خرید") else
                     "فروش مکمل" if hasw("مکمل", "کالای جدید", "محصول جدید") else
@@ -499,6 +529,8 @@ SUGGESTED_QUESTIONS = [
     "کدام مشتری‌ها را باید رها کنیم و چرا؟",
     "به چه کسانی آفر بدهیم و چقدر تخفیف؟",
     "چرا به C_593639 آفر می‌دهیم و مهلتش چقدر باشد؟",
+    "کدام درخواست توسعه بیشترین درآمد را پشت خود دارد؟",
+    "روند شکایت‌ها چطور است و رسیدگی چقدر می‌ارزد؟",
 ]
 
 if __name__ == "__main__":

@@ -385,6 +385,11 @@ def add_rfm_movement(F: pd.DataFrame, F_prev: pd.DataFrame) -> pd.DataFrame:
         lambda r: ("".join(str(int(r[c])) for c in ("R_prev", "Fq_prev", "M_prev"))
                    if pd.notna(r.get("R_prev")) and pd.notna(r.get("Fq_prev"))
                    and pd.notna(r.get("M_prev")) else None), axis=1)
+    # اجزای خام دورهٔ قبل، تا بُعد پولی در داشبورد با هر نرخی بازمحاسبه شود.
+    # بدون این‌ها، پنل حرکت RFM روی نرخ لحظهٔ ساخت کش یخ می‌زند.
+    for src, dst in [("revenue", "prev_revenue"), ("margin", "prev_margin"),
+                     ("days_cash", "prev_days_cash")]:
+        F[dst] = F.index.map(F_prev[src]) if src in F_prev.columns else np.nan
     F["dR"] = F.R - F.R_prev
     F["dF"] = F.Fq - F.Fq_prev
     F["dM"] = F.M - F.M_prev

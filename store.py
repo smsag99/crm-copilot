@@ -59,6 +59,7 @@ class Store:
         self.periods = periods or {}
         self.worklist = (portfolio or {}).get("worklist") or {}
         self.offers = (portfolio or {}).get("offers_engine") or {}
+        self.sc = (portfolio or {}).get("signals_center") or {}
         self.experts = (portfolio or {}).get("experts") or []
         rows = []
         for cid, p in enriched.items():
@@ -661,6 +662,68 @@ class Store:
                      f"انتظاری {x['expected_value']:,.0f}")
         return "\n".join(L)
 
+    # ══════════════════════════════════════════════════════════ ابزار ۱۵
+    def signal_center(self, source: str = "", customer_id: str = "",
+                      limit: int = 10) -> str:
+        """مرکز سیگنال: سه منبع، روند هر دسته، و ارزش کمینهٔ رسیدگی."""
+        sc = self.sc or self.portfolio.get("signals_center") or {}
+        if not sc:
+            return "مرکز سیگنال در کش موجود نیست."
+        cid = (customer_id or "").strip().upper()
+        if cid:
+            r = next((x for x in sc["rows"] if x["customer_id"] == cid), None)
+            if not r:
+                return f"برای {cid} هیچ شکایت، درخواست توسعه یا تعاملی ثبت نشده."
+            L = [f"▸ سیگنال‌های {cid} — {r['activities']} اکتیویتی، "
+                 f"{r['open_total']} باز",
+                 f"• ارزش کمینهٔ رسیدگی {r['min_value']:,.0f} | "
+                 f"درآمد در معرض {r['exposure']:,.0f}"]
+            if r["margin_blocked"]:
+                L.append(f"  ⚠ حاشیهٔ واقعی {r['real_margin']}٪ است؛ ارزش کمینه صفر "
+                         f"می‌شود. با اصلاح شرایط پرداخت: "
+                         f"{r['value_if_terms_fixed']:,.0f}")
+            for k, s in r["sources"].items():
+                m = SC_LABEL.get(k, k)
+                L += ["", f"▸ {m}: {s['n']} مورد ({s.get('open', 0)} باز)",
+                      "  " + "، ".join(f"{a} {b}" for a, b in (s.get("top") or {}).items())]
+                v = s["value"]
+                if v["min_value"]:
+                    L.append(f"  ارزش کمینه {v['min_value']:,.0f} = "
+                             f"کف اندازه‌گیری‌شده {v['measured_floor']:,.0f} + "
+                             f"در معرض {v['exposure']:,.0f} × حاشیهٔ واقعی "
+                             f"{v['real_margin']}٪ × احتمال ریزش {v['churn']}")
+            L += ["", f"▸ هشدار: {sc['value_note']}"]
+            return "\n".join(L)
+
+        secs = sc["sections"]
+        sel = [s for s in secs if not source or s["key"] == source or s["label"] == source]
+        L = ["▸ مرکز سیگنال", f"• {sc['headline']}", "",
+             f"• ارزش کمینهٔ کل {sc['min_value_total']:,.0f} | "
+             f"درآمد در معرض {sc['exposure_total']:,.0f}",
+             f"• {sc['blocked_customers']} مشتری حاشیهٔ واقعی منفی دارند؛ ارزش "
+             f"رسیدگی‌شان با اصلاح شرایط پرداخت {sc['blocked_value']:,.0f} می‌شود"]
+        for s in sel:
+            t = s["trend"]
+            L += ["", f"▸ {s['label']} — {s['total']} {s['unit']} از "
+                      f"{s['customers']} مشتری، {s['open']} {s['open_label']}",
+                  f"  روند: {t['prev']} → {t['now']} در دو نیم‌سال متوالی "
+                  f"({t['direction']})"]
+            for c in s["categories"][:limit]:
+                L.append(f"  • {c['category']}: {c['n']} مورد / {c['customers']} مشتری"
+                         f" / {c['open']} {s['open_label']} — {c['prev']}→{c['now']} "
+                         f"{c['direction']}")
+        if not source or source in ("dev", "درخواست توسعه"):
+            L += ["", "▸ تقاضای انباشته — درآمدی که پشت هر نوع درخواست ایستاده"]
+            for d in sc["dev_demand"]:
+                L.append(f"  • {d['request_type']}: {d['customers']} مشتری با "
+                         f"{d['revenue']:,.0f} درآمد | {d['open']} بی‌پاسخ | "
+                         f"رد فنی {d['reject_rate']}٪")
+        L += ["", "▸ آنچه آزمودیم و اثبات نشد"]
+        for t in sc["effect_tests"]:
+            L.append(f"  • {t['claim']} → {t['result']}"
+                     + (f" (p={t['p']})" if t["p"] else "") + f" — {t['verdict']}")
+        return "\n".join(L)
+
     # ══════════════════════════════════════════════════════════ ابزار ۱۰
     def compare_customers(self, customer_ids: list[str]) -> str:
         ids = [c.strip().upper() for c in customer_ids if c.strip().upper() in self.frame.index]
@@ -831,6 +894,9 @@ def render_profile_fa(p: dict) -> str:
 
 
 # ═════════════════════════════════════════════════════════ ساخت / خواندن کش
+SC_LABEL = {"complaint": "شکایت", "dev": "درخواست توسعه", "crm": "تعامل CRM"}
+
+
 def _py(o):
     """numpy/pandas → انواع پایتونی، تا JSON بی‌صدا نشکند."""
     import numpy as _np
@@ -1016,7 +1082,17 @@ def build_cache(as_of: str | None = None) -> Store:
          "cost_of_money_pct": round(float(r.cost_of_money_pct), 2),
          "days_cash": round(float(r.days_cash), 1) if pd.notna(r.days_cash) else None,
          "revenue": round(float(r.revenue)), "real_gp": round(float(r.real_gp)),
-         "value_at_play": round(float(r.value_at_play)), "focus": r.focus}
+         "value_at_play": round(float(r.value_at_play)), "focus": r.focus,
+         # اجزای دورهٔ قبل، تا حرکت RFM با لغزندهٔ نرخ زنده بازمحاسبه شود
+         "move": r.get("rfm_move_label"),
+         "d_rf": (None if pd.isna(r.get("dR")) or pd.isna(r.get("dF"))
+                  else int(r.dR + r.dF)),
+         "prev_revenue": (None if pd.isna(r.get("prev_revenue"))
+                          else round(float(r.prev_revenue))),
+         "prev_margin": (None if pd.isna(r.get("prev_margin"))
+                         else round(float(r.prev_margin), 2)),
+         "prev_days_cash": (None if pd.isna(r.get("prev_days_cash"))
+                            else round(float(r.prev_days_cash), 1))}
         for cid, r in Am.iterrows()]
 
     # ── تحلیل دوره‌ای برای تب خلاصه (هر ۷ طول دوره، یک‌بار)
@@ -1027,6 +1103,12 @@ def build_cache(as_of: str | None = None) -> Store:
     import worklist as WL
     portfolio["worklist"] = _py(WL.build(enriched, st.frame))
     st.worklist = portfolio["worklist"]
+    # ── مرکز سیگنال (به نمای در-تاریخ و فریم نیاز دارد)
+    import signal_center as SC
+    portfolio["signals_center"] = _py(SC.build(
+        V, enriched, st.frame, ts,
+        achievable_margin=portfolio["achievable_real_margin"]))
+    st.sc = portfolio["signals_center"]
     # ── موتور آفر (به کارتابل برای اولویت مشتری نیاز دارد)
     import offer_engine as OE
     portfolio["offers_engine"] = _py(OE.build(enriched, st.worklist))

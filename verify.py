@@ -15,6 +15,7 @@ import features as FT
 import insights as I
 import money as MN
 import offer_engine as OE
+import signal_center as SC
 import period as PD
 import worklist as WL
 import pipeline as P
@@ -506,6 +507,61 @@ def run() -> int:
        sum(1 for f in AS.REPORT_FIELDS if f["required"]) == 5
        and all(f["label"] and f["hint"] for f in AS.REPORT_FIELDS),
        "نتیجه، نقل قول، تعهد، مانع، تصمیم پیشنهادی")
+
+    # ── ۱۹. مرکز سیگنال
+    sc = SC.build(V, E, _frame_for_validation(E, F), as_of,
+                  achievable_margin=6.83, limit=10 ** 9)
+    ck("هر سه منبع سیگنال ساخته شد و به مشتری نگاشت می‌شود",
+       len(sc["sections"]) == 3
+       and all(s["total"] > 0 and s["customers"] > 0 for s in sc["sections"]),
+       "، ".join(f"{s['label']} {s['total']}/{s['customers']}"
+                 for s in sc["sections"]))
+    ck("روند هر دسته، دو نیم‌سال متوالی و بدون هم‌پوشانی است",
+       all(c["prev_range"][1] == c["range"][0]
+           for s in sc["sections"] for c in [s["trend"]]),
+       f"پنجرهٔ {SC.TREND_DAYS} روزه")
+    ck("شمارش هر منبع با مجموع دسته‌هایش می‌خواند",
+       all(s["total"] == sum(c["n"] for c in s["categories"])
+           for s in sc["sections"]),
+       "بدون رکورد جامانده یا دوشمرده")
+    ck("ارزش در خطر یک‌بار در سطح مشتری است، نه یک‌بار به‌ازای هر منبع",
+       all(r["min_value"] == r["value"]["min_value"] for r in sc["rows"])
+       and all(not r["sources"]["crm"]["risk_basis"]
+               for r in sc["rows"] if "crm" in r["sources"]),
+       "تعامل باز گروه کالای درگیر ندارد، پس ارزش در خطر نمی‌گیرد")
+    ck("ارزش کمینه هرگز از درآمد در معرض بیشتر نمی‌شود",
+       all(r["min_value"] <= r["exposure"] + r["value"]["measured_floor"] + 1
+           for r in sc["rows"]),
+       f"کل: کمینه {sc['min_value_total']:,.0f} در برابر در معرض "
+       f"{sc['exposure_total']:,.0f}")
+    ck("مشتری با حاشیهٔ واقعی منفی، ارزش کمینهٔ صفر و عدد مشروط می‌گیرد",
+       all(r["min_value"] == r["value"]["measured_floor"]
+           and r["value_if_terms_fixed"] > r["min_value"]
+           for r in sc["rows"] if r["margin_blocked"]),
+       f"{sc['blocked_customers']} مشتری، با اصلاح شرایط پرداخت "
+       f"{sc['blocked_value']:,.0f}")
+    ck("جدول اکچوئری بازگشتی از خطوط فاکتور واقعی ساخته شده",
+       sc["return_actuarial"]["overall"]["n"] > 0
+       and 0 < sc["return_actuarial"]["overall"]["p"] < 1
+       and all(0 <= v["p_return"] <= 1
+               for v in sc["return_actuarial"]["by_title"].values()),
+       f"{sc['return_actuarial']['overall']['n']} شکایت پیوندخورده، "
+       f"{sc['return_actuarial']['overall']['p'] * 100:.1f}٪ با بازگشتی")
+    ck("تقاضای انباشتهٔ توسعه بر درآمد مرتب است و مشتری یکتا می‌شمارد",
+       all(a["revenue"] >= b["revenue"]
+           for a, b in zip(sc["dev_demand"], sc["dev_demand"][1:]))
+       and all(d["customers"] <= d["requests"] for d in sc["dev_demand"]),
+       "، ".join(f"{d['request_type']} {d['customers']}"
+                 for d in sc["dev_demand"][:3]))
+    ck("چهار آزمون اثر اجرا و گزارش شده‌اند — هیچ‌کدام معنادار نبود",
+       len(sc["effect_tests"]) == 4
+       and all(t["verdict"] == "اثبات نشد" for t in sc["effect_tests"]),
+       "رسیدگی خرید را بالا نمی‌برد؛ عدد این تب «از‌دست‌رفتنی» است")
+    ck("شکاف CRM گزارش می‌شود: اقدام ثبت می‌شود ولی فیلد بستن ندارد",
+       sc["crm_gap"]["with_next_action"] > 0
+       and sc["crm_gap"]["older_than_90"] > 0,
+       f"{sc['crm_gap']['with_next_action']} اقدام، میانهٔ عمر "
+       f"{sc['crm_gap']['median_age']} روز")
 
     df = pd.DataFrame(rows)
     print()
