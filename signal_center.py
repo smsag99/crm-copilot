@@ -202,6 +202,126 @@ def dev_demand(R: pd.DataFrame, S: pd.DataFrame, F: pd.DataFrame) -> list[dict]:
     return rows
 
 
+# ═══════════════════════════════ نقص محصول — واحد تحلیل، محصول است نه مشتری
+def product_defects(C: pd.DataFrame, L: pd.DataFrame, S: pd.DataFrame,
+                    profiles: dict[str, dict], end: pd.Timestamp,
+                    achievable_margin: float = 6.83,
+                    min_customers: int = 2, limit: int = 40) -> dict:
+    """هر «نقص × گروه کالا» یک پروژهٔ مهندسی است: با یک اصلاح، پروندهٔ چند مشتری
+    هم‌زمان بسته می‌شود.
+
+    عدد پول در دو تکه، و هر دو **درآمد حفظ‌شده** است نه درآمد تازه — چون در بخش
+    ۳۸.۱ آزمودیم و رسیدگی، خرید بعدی را بالا نبرد:
+
+        بازگشتی سالانهٔ متوقف‌شده   اندازه‌گیری‌شده از «مقدار برگشتی» شیت اتصال
+        سود واقعیِ خارج‌شده از خطر  درآمد گروه کالای درگیر × حاشیهٔ واقعی
+                                     × احتمال ریزش × سهم همین نقص از پروندهٔ
+                                     کیفی همان مشتری
+
+    ضرب در «سهم نقص» لازم است وگرنه یک مشتری بزرگ با یک شکایت، کل رابطه‌اش را
+    پای همان یک نقص می‌گذارد و نقصی که ۱۵ بار تکرار شده زیر آن گم می‌شود. چون
+    سهم‌ها برای هر مشتری روی هم ۱ می‌شوند، جمع کل نقص‌ها از ارزش سطح مشتری
+    بیشتر نمی‌شود.
+    """
+    if C.empty:
+        return {"rows": [], "total": 0}
+    years = max((S.date.max() - S.date.min()).days / 365.25, 0.5)
+    price = S.groupby("Customer_ID").apply(
+        lambda g: g.line_amount.sum() / max(g.qty.sum(), 1e-9), include_groups=False)
+    med = float(price.median()) if len(price) else 0.0
+    fam_rev = S.groupby("product_family").line_amount.sum()
+    cust_fam = S.groupby(["Customer_ID", "product_family"]).line_amount.sum()
+    cust_total = C.groupby("Customer_ID").size()
+
+    lk = L.merge(C[["Complaint_ID", "Complaint_Title", "product_family"]],
+                 on="Complaint_ID", how="inner")
+    lk["value"] = lk.returned_qty * lk.Customer_ID.map(price).fillna(med)
+    ret = lk.groupby(["Complaint_Title", "product_family"]).agg(
+        qty=("returned_qty", "sum"), value=("value", "sum"))
+    lots = lk.dropna(subset=["Lot_ID"])
+    lot_note = None
+    if len(lots) > 20:
+        lot_note = (f"{len(lots)} شکایت پیوندخورده به {lots.Lot_ID.nunique()} لات "
+                    "متفاوت — یعنی نقص از یک لات خاص نمی‌آید و ریشه‌اش فرایندی "
+                    "است، نه یک محمولهٔ خراب.")
+
+    rows = []
+    for (title, fam), g in C.groupby(["Complaint_Title", "product_family"]):
+        exposure = protected = 0.0
+        members = []
+        for cid, gg in g.groupby("Customer_ID"):
+            p = profiles.get(cid)
+            if not p:
+                continue
+            f = p.get("features") or {}
+            months = max(_fa_num(p["commercial"].get("active_months")) or 1, 1)
+            rev = float(cust_fam.get((cid, fam), 0.0)) * min(12 / months, 1.0)
+            share = len(gg) / max(int(cust_total.get(cid, 1)), 1)
+            rm = _fa_num(f.get("real_margin"))
+            churn = max(0.0, min(1.0, 1 - _fa_num(f.get("retention"))))
+            exposure += rev
+            protected += rev * max(rm, 0.0) / 100 * churn * share
+            members.append({
+                "customer_id": cid, "n": int(len(gg)),
+                "open": int((gg.Complaint_Status != "closed").sum()),
+                "revenue_in_family": round(rev),
+                "real_margin": round(rm, 2),
+                "rfm_segment": f.get("rfm_segment"),
+                "segment": p["identity"]["segment"],
+                "blocked": bool(rm <= 0)})
+        members.sort(key=lambda m: -m["revenue_in_family"])
+        rv = float(ret.value.get((title, fam), 0.0))
+        rq = float(ret.qty.get((title, fam), 0.0))
+        per = g.groupby("Customer_ID").size()
+        famr = float(fam_rev.get(fam, 0.0))
+        rows.append({
+            "defect": title, "family": fam,
+            "key": f"{title}|{fam}",
+            "complaints": int(len(g)), "customers": len(members),
+            "open": int((g.Complaint_Status != "closed").sum()),
+            "critical": int(g.Severity.isin(["critical", "high"]).sum()),
+            "products": sorted({str(x) for x in g.Product_ID.dropna()})[:4],
+            "trend": _trend(g.Created_At, end),
+            "last": str(g.Created_At.max().date()),
+            "return_qty": round(rq, 1),
+            "return_value": round(rv),
+            "annual_return_stopped": round(rv / years),
+            "exposure": round(exposure),
+            "protected_profit": round(protected),
+            "gain": round(rv / years + protected),
+            "family_revenue": round(famr),
+            "exposure_share_pct": round(exposure / famr * 100, 1) if famr else None,
+            "repeat_rate": round(float((per > 1).mean()) * 100, 1),
+            "blocked_customers": sum(1 for m in members if m["blocked"]),
+            "members": members[:12],
+        })
+    rows.sort(key=lambda r: (-r["gain"], -r["customers"]))
+    shown = [r for r in rows if r["customers"] >= min_customers][:limit]
+    tot_gain = sum(r["gain"] for r in rows)
+    return {
+        "rows": shown, "total": len(rows),
+        "shown": len(shown), "min_customers": min_customers,
+        "gain_total": round(tot_gain),
+        "annual_return_total": round(sum(r["annual_return_stopped"] for r in rows)),
+        "protected_total": round(sum(r["protected_profit"] for r in rows)),
+        "customers_total": int(C.Customer_ID.nunique()),
+        "top10_share": (round(sum(r["gain"] for r in rows[:10]) / tot_gain * 100, 1)
+                        if tot_gain else None),
+        "family_revenue": {k: round(float(v)) for k, v in fam_rev.items()},
+        "years": round(years, 2),
+        "lot_note": lot_note,
+        "gain_note": (
+            "این عدد **درآمد حفظ‌شده** است، نه درآمد تازه: بازگشتی که متوقف "
+            "می‌شود (اندازه‌گیری‌شده) به‌علاوهٔ سود واقعی که از خطر ریزش خارج "
+            "می‌شود. چهار آزمون نشان داد رسیدگی، خرید بعدی را بالا نمی‌برد، پس "
+            "«افزایش فروش» نمی‌نویسیم."),
+        "weight_note": (
+            "سهم هر مشتری در سود در خطر، ضربدر «سهم همین نقص از پروندهٔ کیفی "
+            "خودش» می‌شود؛ وگرنه یک مشتری بزرگ با یک شکایت، نقصی را که ۱۵ بار "
+            "تکرار شده از رتبه پایین می‌آورد."),
+    }
+
+
 # ═══════════════════════════════ ارزش کمینه برای یک مشتری در یک منبع
 def _family_share(mix: dict, families: set) -> float:
     if not mix:
@@ -250,6 +370,7 @@ def build(V: dict[str, pd.DataFrame], profiles: dict[str, dict],
     end = min(as_of, S.date.max())
     act = return_actuarial(C, L, S)
     demand = dev_demand(R, S, frame)
+    defects = product_defects(C, L, S, profiles, end, achievable_margin)
     fam_of = S.groupby("Product_ID").product_family.first()
 
     # ── بخش‌ها: هر منبع، دسته‌بندی درونی، روند، و نگاشت به مشتری
@@ -381,6 +502,7 @@ def build(V: dict[str, pd.DataFrame], profiles: dict[str, dict],
         "blocked_customers": len(blocked),
         "blocked_value": round(sum(r["value_if_terms_fixed"] for r in blocked)),
         "return_actuarial": act,
+        "product_defects": defects,
         "dev_demand": demand,
         "crm_gap": crm_gap,
         "effect_tests": EFFECT_TESTS,

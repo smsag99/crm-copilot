@@ -563,6 +563,29 @@ def run() -> int:
        f"{sc['crm_gap']['with_next_action']} اقدام، میانهٔ عمر "
        f"{sc['crm_gap']['median_age']} روز")
 
+    # ── ۲۰. نقص محصول
+    pdf = sc["product_defects"]
+    ck("هر نقص، ترکیب «نوع نقص × گروه کالا» است و مشتریانش شمرده شده‌اند",
+       all(r["defect"] and r["family"] and r["customers"] >= 1 for r in pdf["rows"]),
+       f"{pdf['total']} ترکیب، {pdf['shown']} نمایش‌داده‌شده")
+    ck("آوردهٔ حل = بازگشتی سالانهٔ متوقف‌شده + سود خارج از خطر",
+       all(abs(r["gain"] - (r["annual_return_stopped"] + r["protected_profit"])) <= 1
+           for r in pdf["rows"]),
+       f"مجموع {pdf['gain_total']:,.0f}")
+    ck("سود خارج از خطر با سهم نقص وزن می‌شود، پس از ارزش سطح مشتری نمی‌گذرد",
+       pdf["protected_total"] <= sc["min_value_total"] + 1,
+       f"{pdf['protected_total']:,.0f} در برابر {sc['min_value_total']:,.0f} سطح مشتری")
+    ck("درآمد در معرض هر نقص از کل درآمد همان گروه کالا بیشتر نیست",
+       all(r["exposure"] <= r["family_revenue"] + 1 for r in pdf["rows"]),
+       "سهم مشتریان درگیر از فروش گروه، همیشه زیر ۱۰۰٪")
+    ck("مشتریان هر نقص فهرست شده‌اند و شکایتشان با کل می‌خواند",
+       all(sum(m["n"] for m in r["members"]) <= r["complaints"]
+           and len(r["members"]) <= r["customers"] for r in pdf["rows"]),
+       "بدون دوشماری یا جاافتادگی")
+    ck("نقص فقط وقتی نمایش داده می‌شود که چند مشتری را هم‌زمان درگیر کرده باشد",
+       all(r["customers"] >= pdf["min_customers"] for r in pdf["rows"]),
+       f"آستانه {pdf['min_customers']} مشتری")
+
     df = pd.DataFrame(rows)
     print()
     print(df.to_string(index=False))

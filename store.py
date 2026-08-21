@@ -712,6 +712,20 @@ class Store:
                 L.append(f"  • {c['category']}: {c['n']} مورد / {c['customers']} مشتری"
                          f" / {c['open']} {s['open_label']} — {c['prev']}→{c['now']} "
                          f"{c['direction']}")
+        pd_ = sc.get("product_defects") or {}
+        if pd_.get("rows") and (not source or source in ("complaint", "شکایت")):
+            L += ["", "▸ نقص محصول — با یک اصلاح، چند پرونده هم‌زمان بسته می‌شود",
+                  f"  آوردهٔ حل همهٔ نقص‌ها {pd_['gain_total']:,.0f} "
+                  f"(بازگشتی متوقف‌شده {pd_['annual_return_total']:,.0f} + "
+                  f"سود خارج از خطر {pd_['protected_total']:,.0f})"]
+            for x in pd_["rows"][:limit]:
+                L.append(f"  • {x['defect']} / {x['family']}: {x['customers']} مشتری "
+                         f"هم‌زمان، {x['complaints']} شکایت ({x['open']} باز) — "
+                         f"آوردهٔ حل {x['gain']:,.0f} | درآمدزایی گروه "
+                         f"{x['family_revenue']:,.0f} | {x['trend']['direction']}")
+            L.append(f"  {pd_['gain_note']}")
+            if pd_.get("lot_note"):
+                L.append(f"  {pd_['lot_note']}")
         if not source or source in ("dev", "درخواست توسعه"):
             L += ["", "▸ تقاضای انباشته — درآمدی که پشت هر نوع درخواست ایستاده"]
             for d in sc["dev_demand"]:

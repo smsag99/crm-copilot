@@ -69,6 +69,59 @@ nav.tabs button{background:none;border:none;border-bottom:2px solid transparent;
 nav.tabs button:hover{color:var(--ink-1)}
 nav.tabs button[aria-selected="true"]{color:var(--ink-1);border-bottom-color:var(--series-1);font-weight:700}
 main{padding:16px 18px 40px;max-width:1620px;margin:0 auto}
+
+/* ═══════════════════ ریسپانسیو ═══════════════════
+   ریشهٔ خرابی روی گوشی: سربرگ یک ردیف فلکس بدون wrap بود، پس عرض صفحه را از
+   عرض نمایشگر بیشتر می‌کرد (۶۵۳ در برابر ۳۹۰) و بعد نوار تب‌ها داخل همان بوم
+   پهن می‌نشست و دکمه‌ها روی هم می‌افتادند. اول سربرگ را می‌شکنیم، بعد بقیه. */
+@media(max-width:900px){
+  header{flex-wrap:wrap;gap:8px;padding:9px 12px;position:static}
+  header .brand{flex:1 1 100%;min-width:0}
+  header .spacer{display:none}
+  header h1{font-size:14.5px} header .sub{font-size:10.5px}
+  nav.tabs{top:0;padding:0 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  nav.tabs::-webkit-scrollbar{display:none}
+  nav.tabs button{padding:10px 11px;font-size:12.5px}
+  main{padding:12px 12px 36px}
+  .grid{gap:10px}
+  .sect{margin:14px 0 8px}
+  .filters>*{min-width:0;flex:1 1 46%}
+  .filters .grow{flex:1 1 100%}
+  .drawer{width:100%}
+  .twrap{-webkit-overflow-scrolling:touch}
+}
+@media(max-width:560px){
+  header{padding:8px 10px;gap:6px}
+  header h1{font-size:13.5px}
+  .badge{font-size:10px;padding:2px 7px}
+  main{padding:10px 10px 78px}   /* جا برای دکمهٔ شناور دستیار */
+  .wcard{padding:10px}
+  .wcard .m{font-size:10px}
+  .card{padding:12px}
+  .sect h2{font-size:15px}
+  .filters>*{flex:1 1 100%}
+  .dcards{grid-template-columns:1fr}
+  .kpi .v{font-size:20px}
+  .wcard .n{font-size:22px}
+  .drawer .dbody{padding:12px 12px 36px}
+  .headline{font-size:13px}
+
+  /* جدول‌های اصلی روی گوشی به کارت تبدیل می‌شوند؛ اسکرول افقی روی یک جدول
+     چهارستونهٔ متنی، عملاً یعنی خواندن ناممکن. */
+  table.wl thead{display:none}
+  table.wl tbody tr{display:block;border:1px solid var(--hair);border-radius:10px;
+    background:var(--surface-1);margin-bottom:8px;padding:9px 11px}
+  table.wl tbody tr+tr{margin-top:0}
+  table.wl td{display:block;border:none;padding:3px 0;white-space:normal!important;
+    text-align:start!important;min-width:0!important}
+  table.wl td.num{text-align:start!important}
+  table.wl td:empty{display:none}
+  table.wl td[data-l]:before{content:attr(data-l) "‏: ";color:var(--ink-3);font-size:10.5px}
+  .twrap:has(table.wl){border:none;overflow:visible;max-height:none!important}
+
+  /* بقیهٔ جدول‌ها ستون‌های عددی‌اند و اسکرول افقی برایشان طبیعی است */
+  .twrap>table:not(.wl){min-width:620px}
+}
 .view{display:none} .view.on{display:block}
 
 .card{background:var(--surface-1);border:1px solid var(--hair);border-radius:var(--r);
@@ -76,12 +129,16 @@ main{padding:16px 18px 40px;max-width:1620px;margin:0 auto}
 .card>h3{font-size:13px;margin-bottom:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .card>.hint{font-size:11px;color:var(--ink-3);margin:2px 0 11px;line-height:1.6}
 .grid{display:grid;gap:12px}
+.grid>*{min-width:0}
 .g6{grid-template-columns:repeat(6,1fr)} .g5{grid-template-columns:repeat(5,1fr)}
 .g4{grid-template-columns:repeat(4,1fr)} .g3{grid-template-columns:repeat(3,1fr)}
 .g2{grid-template-columns:repeat(2,1fr)} .g21{grid-template-columns:2fr 1fr}
 @media(max-width:1240px){.g6{grid-template-columns:repeat(3,1fr)}.g5,.g4{grid-template-columns:repeat(2,1fr)}
   .g3{grid-template-columns:repeat(2,1fr)}.g21{grid-template-columns:1fr}}
 @media(max-width:780px){.g6,.g5,.g4,.g3,.g2{grid-template-columns:1fr}}
+/* روی گوشی کارت‌های کوتاه دوتایی می‌مانند — بعد از قاعدهٔ بالا می‌آید تا برنده شود */
+@media(max-width:560px){.g6,.g5,.g4,.g3{grid-template-columns:repeat(2,1fr)}
+  .g2,.g21{grid-template-columns:1fr}}
 .mb{margin-bottom:12px}
 
 .tile{background:var(--surface-1);border:1px solid var(--hair);border-radius:var(--r);padding:11px 13px}
@@ -633,6 +690,23 @@ details.note>.body .caveat{background:transparent;border:none;padding:0}
     <div class="twrap" style="max-height:560px">
       <table class="attn wl" id="sg-table"></table></div>
     <p class="hint" id="sg-rownote" style="margin:9px 0 0"></p>
+  </div>
+
+  <div class="sect"><h2>نقص محصول — با یک اصلاح، چند پرونده هم‌زمان بسته می‌شود</h2>
+    <span class="s" id="pd-sub"></span></div>
+  <div class="grid g4 mb" id="pd-kpis"></div>
+  <div class="card mb">
+    <div class="filters" style="margin:0 0 10px">
+      <label class="f">مرتب بر<select id="pd-sort">
+        <option value="gain">آوردهٔ حل مشکل</option>
+        <option value="customers">تعداد مشتری هم‌زمان</option>
+        <option value="open">پروندهٔ باز</option>
+        <option value="complaints">تعداد شکایت</option></select></label>
+      <label class="f">گروه کالا<select id="pd-fam"><option value="">همهٔ گروه‌ها</option></select></label>
+    </div>
+    <div class="twrap" style="max-height:520px">
+      <table class="attn wl" id="pd-table"></table></div>
+    <p class="hint" id="pd-note" style="margin:9px 0 0"></p>
   </div>
 
   <div class="grid g2 mb">
@@ -1959,6 +2033,7 @@ function renderWork(){
     tb.append(tr);});
   if(!rows.length)tb.append(el('tr',{},el('td',{colspan:4},el('div',{class:'empty'},'موردی با این فیلتر نیست.'))));
   t.append(tb);
+  labelCells();
   $('#w-note').textContent=`${rows.length} از ${int(WL.shown)} سطر نمایش‌داده‌شده · کل مشتریان دارای کار: ${int(WL.total)} · مرتب بر اولویت، سپس مبلغ در گیر`;
 }
 
@@ -2167,6 +2242,117 @@ function renderSignals(){
       .map(([k,v,x])=>el('div',{class:'dcard'},el('div',{class:'k'},k),
         el('div',{class:'v'},String(v)),el('div',{class:'x'},x)))),
     el('p',{class:'caveat'},g.note||''));
+  renderDefects();
+  collapseNotes();
+}
+
+/* ═══ نقص محصول: واحد تحلیل، محصول است نه مشتری ═══
+   یک اصلاح مهندسی روی «نقص × گروه کالا» پروندهٔ چند مشتری را هم‌زمان می‌بندد.
+   عدد پول «درآمد حفظ‌شده» است نه درآمد تازه — چون چهار آزمون اثر منفی شد. */
+let PDSORT='gain', PDFAM='';
+
+function renderDefects(){
+  const d=(SG||{}).product_defects; if(!d||!d.rows)return;
+  $('#pd-sub').textContent=int(d.total)+' ترکیب «نقص × گروه کالا» شناسایی شد؛ '
+    +int(d.shown)+' موردی که دست‌کم '+int(d.min_customers)+' مشتری را هم‌زمان درگیر کرده نمایش داده می‌شود';
+
+  const K=$('#pd-kpis'); K.innerHTML='';
+  const top=d.rows[0]||{};
+  [['آوردهٔ حل همهٔ نقص‌ها',money(d.gain_total),'درآمد حفظ‌شده، نه درآمد تازه','crit'],
+   ['بازگشتی سالانهٔ متوقف‌شده',money(d.annual_return_total),
+    'اندازه‌گیری‌شده روی '+d.years+' سال داده',''],
+   ['سود واقعی خارج از خطر',money(d.protected_total),'وزن‌دار به سهم هر نقص',''],
+   ['بیشترین اثر هم‌زمان',int(Math.max(...d.rows.map(r=>r.customers)))+' مشتری',
+    'با یک اصلاح: '+(top.defect||'—'),'warn']]
+   .forEach(([k,v,x,c])=>K.append(el('div',{class:'kpi'},
+     el('div',{class:'k'},k),el('div',{class:'v'+(c?' '+c:'')},v),el('div',{class:'x'},x))));
+
+  const fams=[...new Set(d.rows.map(r=>r.family))].sort();
+  const sel=$('#pd-fam');
+  if(sel.options.length<=1)fams.forEach(f=>sel.append(el('option',{value:f},f)));
+
+  const rows=d.rows.filter(r=>!PDFAM||r.family===PDFAM)
+    .slice().sort((a,b)=>(b[PDSORT]||0)-(a[PDSORT]||0));
+  const t=$('#pd-table'); t.innerHTML='';
+  t.append(el('thead',{},el('tr',{},['نقص و گروه کالا','مشتری هم‌زمان','پرونده',
+    'آوردهٔ حل مشکل','درآمدزایی گروه کالا','روند'].map(h=>el('th',{},h)))));
+  const tb=el('tbody',{});
+  rows.forEach(r=>{
+    const tr=el('tr',{onclick:()=>openDefect(r.key)});
+    tr.append(
+      el('td',{},el('div',{class:'g'},r.defect),
+        el('div',{class:'s'},r.family+(r.products.length?' · '+r.products.length+' کد کالا':''))),
+      el('td',{class:'num'},el('b',{},int(r.customers)),
+        el('div',{class:'s'},'با یک اصلاح')),
+      el('td',{class:'num'},int(r.complaints)+' شکایت',
+        el('div',{class:'s'},int(r.open)+' باز · '+int(r.critical)+' بحرانی')),
+      el('td',{class:'num'},el('b',{},money(r.gain)),
+        el('div',{class:'s'},'بازگشتی '+money(r.annual_return_stopped)
+          +' + محافظت '+money(r.protected_profit))),
+      el('td',{class:'num'},money(r.family_revenue),
+        el('div',{class:'s'},'سهم این مشتریان '+pc(r.exposure_share_pct,1))),
+      el('td',{},el('span',{class:'chip '+(r.trend.direction==='رو به رشد'?'critical'
+        :r.trend.direction==='رو به کاهش'?'good':'low')},r.trend.direction),
+        el('div',{class:'s'},'قبل '+int(r.trend.prev)+' · اخیر '+int(r.trend.now))));
+    tb.append(tr);});
+  if(!rows.length)tb.append(el('tr',{},el('td',{colspan:6},el('div',{class:'empty'},'موردی نیست.'))));
+  t.append(tb);
+  labelCells();
+  $('#pd-note').textContent=d.gain_note.replace(/\*\*/g,'')+' '+d.weight_note
+    +(d.lot_note?' '+d.lot_note:'');
+}
+
+function openDefect(key){
+  const d=(SG||{}).product_defects, r=(d.rows||[]).find(x=>x.key===key); if(!r)return;
+  $('#drawer').classList.add('on'); $('#scrim').classList.add('on');
+  $('#dw-name').textContent=r.defect;
+  const L=$('#dw-labels'); L.innerHTML='';
+  [el('span',{class:'chip'},r.family),
+   el('span',{class:'chip critical'},int(r.customers)+' مشتری هم‌زمان'),
+   r.open?el('span',{class:'chip warning'},int(r.open)+' پروندهٔ باز'):null,
+   el('span',{class:'chip '+(r.trend.direction==='رو به رشد'?'critical':'low')},r.trend.direction)
+  ].filter(Boolean).forEach(n=>L.append(n));
+  $('#dw-open').onclick=()=>{closeDrawer();go('signals');};
+  const B=$('#dw-body'); B.innerHTML='';
+
+  B.append(el('div',{class:'mainprob'},
+    el('div',{class:'t'},'آوردهٔ حل این مشکل: '+money(r.gain)),
+    el('div',{class:'e'},'با یک اصلاح روی '+r.family+'، پروندهٔ '+int(r.customers)
+      +' مشتری هم‌زمان بسته می‌شود.')));
+
+  const g=el('div',{class:'dcards'});
+  [['بازگشتی سالانهٔ متوقف‌شده',money(r.annual_return_stopped),
+    r.return_qty?int(r.return_qty)+' کیلوگرم برگشتی ثبت‌شده':'بازگشتی ثبت‌شده ندارد'],
+   ['سود واقعی خارج از خطر',money(r.protected_profit),'وزن‌دار به سهم این نقص'],
+   ['درآمدزایی گروه کالا',money(r.family_revenue),'کل فروش این گروه در سبد'],
+   ['درآمد در معرض',money(r.exposure),pc(r.exposure_share_pct,1)+' از فروش این گروه'],
+   ['تکرار در یک مشتری',pc(r.repeat_rate,0),'سهم مشتریانی که بیش از یک‌بار ثبت کرده‌اند'],
+   ['آخرین ثبت',r.last,'قبل '+int(r.trend.prev)+' · اخیر '+int(r.trend.now)],
+  ].forEach(([k,v,x])=>g.append(el('div',{class:'dcard'},
+    el('div',{class:'k'},k),el('div',{class:'v'},v),el('div',{class:'x'},x))));
+  B.append(el('div',{class:'card'},el('h3',{},'اقتصاد این نقص'),g,
+    el('p',{class:'caveat','data-keep':'1'},d.gain_note.replace(/\*\*/g,''))));
+
+  const c=el('div',{class:'card'});
+  c.append(el('h3',{},'مشتریانی که با این اصلاح آزاد می‌شوند'));
+  const tw=el('div',{class:'twrap',style:'max-height:300px'});
+  const tb2=el('table',{class:'attn'});
+  tb2.append(el('thead',{},el('tr',{},['مشتری','شکایت','فروش در این گروه','حاشیهٔ واقعی']
+    .map(h=>el('th',{},h)))));
+  const body=el('tbody',{});
+  (r.members||[]).forEach(m=>body.append(el('tr',{onclick:()=>{closeDrawer();openCard(m.customer_id);}},
+    el('td',{},el('b',{},m.customer_id),el('div',{class:'s'},'بخش '+m.segment+' · '+(m.rfm_segment||'—'))),
+    el('td',{class:'num'},int(m.n)+(m.open?' ('+int(m.open)+' باز)':'')),
+    el('td',{class:'num'},money(m.revenue_in_family)),
+    el('td',{class:'num'},m.blocked?el('span',{class:'chip warning'},'منفی'):pc(m.real_margin)))));
+  tb2.append(body); tw.append(tb2); c.append(tw);
+  if(r.blocked_customers)c.append(el('p',{class:'hint'},int(r.blocked_customers)
+    +' نفر از این مشتریان حاشیهٔ واقعی منفی دارند؛ سهمشان در «سود خارج از خطر» صفر است '
+    +'تا وقتی شرایط پرداختشان اصلاح نشود.'));
+  if(r.products.length)c.append(el('p',{class:'hint'},'کدهای کالای درگیر: '+r.products.join('، ')));
+  B.append(c);
+  if(d.lot_note)B.append(el('div',{class:'card'},el('h3',{},'ریشه کجاست؟'),
+    el('p',{class:'caveat','data-keep':'1'},d.lot_note)));
   collapseNotes();
 }
 
@@ -2353,6 +2539,7 @@ function renderOffers(){
       el('div',{class:'s'},'هزینهٔ پول '+pc(r.cost_of_money_pct)+' · '+int(r.days_cash)+' روز')),
     el('td',{class:'why'},r.block_reason))));
   bt.append(bb);
+  labelCells();
   collapseNotes();
 }
 
@@ -2500,6 +2687,7 @@ function renderFollowup(){
   $('#fu-sum').textContent=int(s.total||0)+' ارجاع · '+int(s.open||0)+' باز · '
     +int(s.awaiting_decision||0)+' منتظر تصمیم شما';
   $('#fu-note').textContent='روی هر سطر بزنید تا گزارش کامل کارشناس و ثبت تصمیم باز شود.';
+  labelCells();
 }
 
 function openFollowup(rid){
@@ -2609,6 +2797,7 @@ async function renderExpert(){
   t.append(tb);
   $('#e-count').textContent=int(EROWS.length)+' مورد · مرتب بر اهمیت مشتری';
   $('#e-note').textContent='روی هر مورد بزنید تا اطلاعات مشتری، نحوهٔ تماس و فرم گزارش باز شود.';
+  labelCells();
   collapseNotes();
 }
 
@@ -2984,9 +3173,32 @@ function setRole(role){
   go(mgr?'work':'expert');
 }
 
+/* جدولی که بدون پوشش اسکرول رندر شده، روی گوشی کل صفحه را پهن می‌کند.
+   یک‌بار دورش پوشش می‌گذاریم تا داخل خودش اسکرول شود. */
+/* در حالت کارتی گوشی، سرستون‌ها پنهان می‌شوند؛ عنوان هر ستون را روی خود سلول
+   می‌نشانیم تا «۵» بدون سرستون، بی‌معنا نماند. */
+function labelCells(){
+  $$('table.wl').forEach(t=>{
+    const hs=[...t.querySelectorAll('thead th')].map(h=>h.textContent.trim());
+    if(!hs.length)return;
+    t.querySelectorAll('tbody tr').forEach(tr=>{
+      [...tr.children].forEach((td,i)=>{ if(hs[i])td.dataset.l=hs[i]; });});
+  });
+}
+
+function wrapTables(){
+  $$('table').forEach(t=>{
+    if(t.closest('.twrap')||t.dataset.wrapped)return;
+    t.dataset.wrapped='1';
+    const w=el('div',{class:'twrap',style:'max-height:none'});
+    t.parentNode.insertBefore(w,t); w.append(t);
+  });
+}
+
 /* هر توضیح صفحه به یک دراپ‌داون جمع‌شونده تبدیل می‌شود؛
    صفحه به‌طور پیش‌فرض فقط عدد و اقدام نشان می‌دهد. */
 function collapseNotes(){
+  wrapTables(); labelCells();
   $$('.hint, .caveat').forEach(n=>{
     if(n.dataset.wrapped||!n.textContent.trim()||n.closest('details.note'))return;
     if(n.dataset.keep)return;   /* جمله‌هایی که جمع‌کردنشان خودِ پیام را می‌کشد */
@@ -3040,6 +3252,8 @@ function dockOpen(open){
   $('#f-sort').onchange=()=>{const [k,a]=$('#f-sort').value.split('|');SORT={key:k,asc:a==='true'};loadCustomers();};
   ['#f-seg','#f-risk','#f-opp','#f-sig','#f-rfm','#f-quad','#f-focus'].forEach(s=>$(s).onchange=loadCustomers);
   let tmr; $('#f-q').oninput=()=>{clearTimeout(tmr);tmr=setTimeout(loadCustomers,220);};
+  $('#pd-sort').onchange=()=>{PDSORT=$('#pd-sort').value;renderDefects();};
+  $('#pd-fam').onchange=()=>{PDFAM=$('#pd-fam').value;renderDefects();};
   $('#t-go').onclick=runTextSearch;
   $('#t-q').onkeydown=e=>{if(e.key==='Enter')runTextSearch();};
   $('#send').onclick=()=>ask($('#q').value);
